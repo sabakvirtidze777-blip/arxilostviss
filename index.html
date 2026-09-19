@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>არხილოსთვის
+</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#02030a;
+    color:white;
+    font-family:Arial,"Noto Sans Georgian",sans-serif
+}
+
+canvas{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    cursor:crosshair
+}
+
+#hud{
+    position:fixed;
+    inset:0;
+    pointer-events:none
+}
+
+.top{
+    position:absolute;
+    top:18px;
+    left:18px;
+    right:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start
+}
+
+.panel{
+    min-width:240px;
+    padding:14px;
+    border:1px solid #00f6ff44;
+    background:#030814cc;
+    border-radius:14px;
+    backdrop-filter:blur(10px);
+    box-shadow:0 0 30px #00f6ff12
+}
+
+.title{
+    color:#00f6ff;
+    font-size:14px;
+    font-weight:bold;
+    letter-spacing:2px;
+    margin-bottom:10px
+}
+
+.stat{
+    font-size:14px;
+    color:#aab8d0;
+    margin:5px 0
+}
+
+.stat strong{
+    color:white
+}
+
+.bar{
+    width:220px;
+    height:12px;
+    border-radius:20px;
+    overflow:hidden;
+    background:#ffffff12;
+    border:1px solid #ffffff1c;
+    margin:5px 0 10px
+}
+
+.bar div{
+    height:100%;
+    width:100%;
+    transition:width .15s
+}
+
+#hpBar{
+    background:linear-gradient(90deg,#ff1744,#ff4d8d);
+    box-shadow:0 0 15px #ff1744
+}
+
+#xpBar{
+    background:linear-gradient(90deg,#00e5ff,#7c4dff);
+    box-shadow:0 0 15px #00e5ff
+}
+
+#menu,
+#gameOver,
+#upgradeScreen,
+#pauseScreen{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+        radial-gradient(circle,#00ffff10,#000d 65%);
+    z-index:10
+}
+
+.hidden{
+    display:none!important
+}
+
+.modal{
+    width:min(700px,92vw);
+    padding:40px;
+    border-radius:24px;
+    text-align:center;
+    border:1px solid #00f6ff44;
+    background:#020712ed;
+    box-shadow:0 0 80px #00f6ff1f;
+    backdrop-filter:blur(18px)
+}
+
+.logo{
+    font-size:clamp(40px,8vw,80px);
+    font-weight:900;
+    letter-spacing:4px;
+    color:#00f6ff;
+    text-shadow:
+        0 0 10px #00f6ff,
+        0 0 35px #00f6ffb0
+}
+
+.logo.purple{
+    color:#7c4dff;
+    text-shadow:
+        0 0 10px #7c4dff,
+        0 0 35px #7c4dffaa
+}
+
+.subtitle{
+    color:#8090ac;
+    letter-spacing:3px;
+    font-size:12px;
+    margin:12px 0 30px
+}
+
+button{
+    border:0;
+    color:white;
+    font-weight:800;
+    font-size:14px;
+    letter-spacing:1px;
+    padding:15px 30px;
+    border-radius:12px;
+    cursor:pointer;
+    background:linear-gradient(135deg,#00c6ff,#7c4dff);
+    box-shadow:0 0 25px #00c6ff55;
+    transition:.2s
+}
+
+button:hover{
+    transform:translateY(-2px) scale(1.02);
+    box-shadow:0 0 35px #00c6ff99
+}
+
+.controls{
+    margin-top:28px;
+    color:#7d8aa5;
+    line-height:2;
+    font-size:13px
+}
+
+.upgrades{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-top:25px
+}
+
+.upgrade{
+    min-height:175px;
+    padding:20px 14px;
+    background:#ffffff08;
+    border:1px solid #ffffff18;
+    border-radius:17px;
+    cursor:pointer;
+    transition:.2s
+}
+
+.upgrade:hover{
+    transform:translateY(-6px);
+    border-color:#00f6ff;
+    background:#00f6ff12
+}
+
+.upgradeIcon{
+    font-size:38px;
+    margin-bottom:12px
+}
+
+.upgrade h3{
+    color:#00f6ff;
+    font-size:14px;
+    margin-bottom:9px
+}
+
+.upgrade p{
+    color:#8593ad;
+    font-size:12px;
+    line-height:1.5
+}
+
+.bigScore{
+    font-size:52px;
+    font-weight:900;
+    margin:15px 0 25px;
+    text-shadow:0 0 25px #fff6
+}
+
+#levelUpText{
+    color:#7c4dff;
+    letter-spacing:3px;
+    font-size:12px
+}
+
+@media(max-width:700px){
+    .upgrades{
+        grid-template-columns:1fr
+    }
+
+    .modal{
+        padding:25px
+    }
+
+    .top{
+        transform:scale(.78);
+        transform-origin:top left
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud">
+
+    <div class="top">
+
+        <div class="panel">
+
+            <div class="title">
+                ⭐ 
+                    
+                არხილოსთვის
+            </div>
+
+            <div class="stat">
+                სიცოცხლე
+            </div>
+
+            <div class="bar">
+                <div id="hpBar"></div>
+            </div>
+
+            <div class="stat">
+                გამოცდილება
+            </div>
+
+            <div class="bar">
+                <div id="xpBar"></div>
+            </div>
+
+            <div class="stat">
+                დონე:
+                <strong id="levelText">1</strong>
+            </div>
+
+        </div>
+
+        <div class="panel" style="text-align:right">
+
+            <div class="stat">
+                ქულა:
+                <strong id="scoreText">0</strong>
+            </div>
+
+            <div class="stat">
+                მონეტები:
+                <strong id="coinsText">0</strong>
+            </div>
+
+            <div class="stat">
+                დრო:
+                <strong id="timeText">00:00</strong>
+            </div>
+
+            <div class="stat">
+                განადგურებული მტრები:
+                <strong id="killsText">0</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- მთავარი მენიუ -->
+
+<div id="menu">
+
+    <div class="modal">
+
+        <div class="logo">
+            არხილოსთვის
+        </div>
+
+        <div class="logo purple">
+        
+        </div>
+
+        <div class="subtitle">
+            გადარჩი უსასრულო კოსმოსურ ბრძოლაში
+        </div>
+
+        <button id="startBtn">
+            ▶ თამაშის დაწყება
+        </button>
+
+        <div class="controls">
+            <div>W A S D / ისრები — მოძრაობა</div>
+            <div>მაუსი — დამიზნება</div>
+            <div>მარცხენა ღილაკი — სროლა</div>
+            <div>SPACE — სწრაფი გადახტომა</div>
+            <div>ESC — პაუზა</div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- გაუმჯობესება -->
+
+<div id="upgradeScreen" class="hidden">
+
+    <div class="modal">
+
+        <div id="levelUpText">
+            ახალი დონე
+        </div>
+
+        <h1 style="margin-top:10px">
+            აირჩიე გაუმჯობესება
+        </h1>
+
+        <div
+            class="upgrades"
+            id="upgradeContainer">
+        </div>
+
+    </div>
+
+</div>
+
+<!-- პაუზა -->
+
+<div id="pauseScreen" class="hidden">
+
+    <div class="modal">
+
+        <div
+            class="logo"
+            style="font-size:50px">
+            პაუზა
+        </div>
+
+        <br><br>
+
+        <button id="resumeBtn">
+            ▶ გაგრძელება
+        </button>
+
+    </div>
+
+</div>
+
+<!-- Game Over -->
+
+<div id="gameOver" class="hidden">
+
+    <div class="modal">
+
+        <div class="subtitle">
+            მისია დასრულებულია
+        </div>
+
+        <h1 style="font-size:42px">
+            თამაში დასრულდა
+        </h1>
+
+        <div
+            class="bigScore"
+            id="finalScore">
+            0
+        </div>
+
+        <div class="stat">
+            გადარჩენის დრო:
+            <strong id="finalTime">
+                00:00
+            </strong>
+        </div>
+
+        <div class="stat">
+            განადგურებული მტრები:
+            <strong id="finalKills">
+                0
+            </strong>
+        </div>
+
+        <br>
+
+        <button id="restartBtn">
+            🔄 თავიდან თამაში
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+"use strict";
+
+const canvas =
+    document.getElementById("game");
+
+const ctx =
+    canvas.getContext("2d");
+
+let W = innerWidth;
+let H = innerHeight;
+let dpr = 1;
+
+function resize(){
+
+    W = innerWidth;
+    H = innerHeight;
+
+    dpr =
+        Math.min(
+            devicePixelRatio || 1,
+            2
+        );
+
+    canvas.width =
+        W * dpr;
+
+    canvas.height =
+        H * dpr;
+
+    canvas.style.width =
+        W + "px";
+
+    canvas.style.height =
+        H + "px";
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+}
+
+addEventListener(
+    "resize",
+    resize
+);
+
+resize();
+
+/* =========================
+   AUDIO
+========================= */
+
+let audio = null;
+
+function initAudio(){
+
+    if(!audio){
+
+        audio =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+    }
+
+    if(audio.state === "suspended"){
+        audio.resume();
+    }
+}
+
+function beep(
+    frequency,
+    duration=.05,
+    type="sine",
+    volume=.025
+){
+
+    if(!audio)return;
+
+    const oscillator =
+        audio.createOscillator();
+
+    const gain =
+        audio.createGain();
+
+    oscillator.type =
+        type;
+
+    oscillator.frequency.value =
+        frequency;
+
+    gain.gain.setValueAtTime(
+        volume,
+        audio.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        .001,
+        audio.currentTime + duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audio.destination);
+
+    oscillator.start();
+
+    oscillator.stop(
+        audio.currentTime + duration
+    );
+}
+
+/* =========================
+   კონტროლი
+========================= */
+
+const keys = {};
+
+const mouse = {
+    x: W/2,
+    y: H/2,
+    down:false
+};
+
+addEventListener(
+    "keydown",
+    e => {
+
+        keys[e.code] = true;
+
+        if([
+            "Space",
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight"
+        ].includes(e.code)){
+
+            e.preventDefault();
+        }
+
+        if(e.code === "Escape"){
+            togglePause();
+        }
+
+        if(e.code === "Space"){
+            dash();
+        }
+    }
+);
+
+addEventListener(
+    "keyup",
+    e => {
+        keys[e.code] = false;
+    }
+);
+
+addEventListener(
+    "mousemove",
+    e => {
+
+        mouse.x =
+            e.clientX;
+
+        mouse.y =
+            e.clientY;
+    }
+);
+
+addEventListener(
+    "mousedown",
+    () => {
+
+        mouse.down = true;
+
+        initAudio();
+    }
+);
+
+addEventListener(
+    "mouseup",
+    () => {
+
+        mouse.down = false;
+    }
+);
+
+/* =========================
+   GAME STATE
+========================= */
+
+let running = false;
+let paused = false;
+
+let last = 0;
+
+let time = 0;
+let score = 0;
+let coins = 0;
+let kills = 0;
+
+let level = 1;
+
+let xp = 0;
+let xpNeed = 100;
+
+let spawnTimer = 0;
+let shake = 0;
+
+/* =========================
+   მოთამაშე
+========================= */
+
+const player = {
+
+    x: W/2,
+    y: H/2,
+
+    r:17,
+
+    speed:300,
+
+    hp:100,
+    maxHp:100,
+
+    damage:25,
+
+    fireRate:.13,
+    fireCD:0,
+
+    bulletSpeed:850,
+
+    crit:.1,
+
+    dashCD:0,
+
+    invuln:0
+};
+
+/* =========================
+   ობიექტები
+========================= */
+
+const bullets = [];
+const enemies = [];
+const particles = [];
+const texts = [];
+const stars = [];
+
+/* ვარსკვლავები */
+
+for(let i=0;i<250;i++){
+
+    stars.push({
+
+        x:Math.random()*W,
+
+        y:Math.random()*H,
+
+        r:Math.random()*1.8+.3,
+
+        speed:Math.random()*25+5,
+
+        alpha:Math.random()*.7+.2
+    });
+}
+
+/* =========================
+   დამხმარე ფუნქციები
+========================= */
+
+function clamp(v,min,max){
+
+    return Math.max(
+        min,
+        Math.min(max,v)
+    );
+}
+
+function rand(min,max){
+
+    return Math.random() *
+        (max-min) +
+        min;
+}
+
+function formatTime(seconds){
+
+    const minutes =
+        Math.floor(seconds/60)
+        .toString()
+        .padStart(2,"0");
+
+    const secs =
+        Math.floor(seconds%60)
+        .toString()
+        .padStart(2,"0");
+
+    return minutes + ":" + secs;
+}
+
+/* =========================
+   PARTICLES
+========================= */
+
+function burst(
+    x,
+    y,
+    color,
+    amount=15,
+    speed=180
+){
+
+    for(let i=0;i<amount;i++){
+
+        const angle =
+            Math.random() *
+            Math.PI * 2;
+
+        const velocity =
+            Math.random() *
+            speed;
+
+        particles.push({
+
+            x,
+            y,
+
+            vx:
+                Math.cos(angle) *
+                velocity,
+
+            vy:
+                Math.sin(angle) *
+                velocity,
+
+            life:
+                rand(.25,.8),
+
+            max:.8,
+
+            size:
+                rand(1,4),
+
+            color
+        });
+    }
+}
+
+/* =========================
+   ტექსტის ეფექტი
+========================= */
+
+function floating(
+    x,
+    y,
+    text,
+    color="#fff"
+){
+
+    texts.push({
+
+        x,
+        y,
+
+        text,
+
+        color,
+
+        life:1,
+
+        vy:-35
+    });
+}
+
+/* =========================
+   მტრის შექმნა
+========================= */
+
+function spawnEnemy(){
+
+    const side =
+        Math.floor(
+            Math.random()*4
+        );
+
+    let x;
+    let y;
+
+    if(side===0){
+
+        x=-60;
+        y=Math.random()*H;
+    }
+
+    if(side===1){
+
+        x=W+60;
+        y=Math.random()*H;
+    }
+
+    if(side===2){
+
+        x=Math.random()*W;
+        y=-60;
+    }
+
+    if(side===3){
+
+        x=Math.random()*W;
+        y=H+60;
+    }
+
+    const difficulty =
+        1 + time/55;
+
+    const roll =
+        Math.random();
+
+    if(roll < .68){
+
+        enemies.push({
+
+            type:"drone",
+
+            x,
+            y,
+
+            r:16,
+
+            speed:
+                rand(65,100) *
+                difficulty,
+
+            hp:
+                55 *
+                difficulty,
+
+            maxHp:
+                55 *
+                difficulty,
+
+            damage:15,
+
+            color:"#ff2e63",
+
+            xp:20,
+
+            coins:1
+        });
+
+    }else if(roll < .9){
+
+        enemies.push({
+
+            type:"fast",
+
+            x,
+            y,
+
+            r:11,
+
+            speed:
+                rand(140,200) *
+                difficulty,
+
+            hp:
+                32 *
+                difficulty,
+
+            maxHp:
+                32 *
+                difficulty,
+
+            damage:11,
+
+            color:"#ff9f1c",
+
+            xp:28,
+
+            coins:2
+        });
+
+    }else{
+
+        enemies.push({
+
+            type:"tank",
+
+            x,
+            y,
+
+            r:28,
+
+            speed:
+                rand(35,55) *
+                difficulty,
+
+            hp:
+                250 *
+                difficulty,
+
+            maxHp:
+                250 *
+                difficulty,
+
+            damage:28,
+
+            color:"#9b5de5",
+
+            xp:70,
+
+            coins:5
+        });
+    }
+}
+
+/* =========================
+   სროლა
+========================= */
+
+function shoot(){
+
+    if(player.fireCD > 0)return;
+
+    const angle =
+        Math.atan2(
+            mouse.y-player.y,
+            mouse.x-player.x
+        );
+
+    const critical =
+        Math.random() <
+        player.crit;
+
+    const damage =
+        player.damage *
+        (critical ? 2 : 1);
+
+    bullets.push({
+
+        x:
+            player.x +
+            Math.cos(angle)*24,
+
+        y:
+            player.y +
+            Math.sin(angle)*24,
+
+        vx:
+            Math.cos(angle) *
+            player.bulletSpeed,
+
+        vy:
+            Math.sin(angle) *
+            player.bulletSpeed,
+
+        r:4,
+
+        damage,
+
+        life:1.5,
+
+        critical
+    });
+
+    player.fireCD =
+        player.fireRate;
+
+    burst(
+
+        player.x +
+        Math.cos(angle)*25,
+
+        player.y +
+        Math.sin(angle)*25,
+
+        critical
+            ? "#ffe66d"
+            : "#00f6ff",
+
+        5,
+
+        80
+    );
+
+    beep(
+        critical ? 950 : 650,
+        .035,
+        "square",
+        critical ? .05 : .025
+    );
+}
+
+/* =========================
+   DASH
+========================= */
+
+function dash(){
+
+    if(
+        !running ||
+        paused ||
+        player.dashCD > 0
+    ){
+        return;
+    }
+
+    let dx=0;
+    let dy=0;
+
+    if(keys.KeyW || keys.ArrowUp)
+        dy--;
+
+    if(keys.KeyS || keys.ArrowDown)
+        dy++;
+
+    if(keys.KeyA || keys.ArrowLeft)
+        dx--;
+
+    if(keys.KeyD || keys.ArrowRight)
+        dx++;
+
+    if(!dx && !dy){
+
+        dx =
+            mouse.x -
+            player.x;
+
+        dy =
+            mouse.y -
+            player.y;
+    }
+
+    const length =
+        Math.hypot(dx,dy) || 1;
+
+    dx/=length;
+    dy/=length;
+
+    player.x =
+        clamp(
+            player.x + dx*240,
+            25,
+            W-25
+        );
+
+    player.y =
+        clamp(
+            player.y + dy*240,
+            25,
+            H-25
+        );
+
+    player.invuln=.35;
+
+    player.dashCD=2;
+
+    burst(
+        player.x,
+        player.y,
+        "#00f6ff",
+        35,
+        400
+    );
+
+    shake=10;
+
+    beep(
+        180,
+        .12,
+        "sawtooth",
+        .05
+    );
+}
+
+/* =========================
+   XP
+========================= */
+
+function gainXP(amount){
+
+    xp += amount;
+
+    if(xp >= xpNeed){
+
+        xp -= xpNeed;
+
+        level++;
+
+        xpNeed =
+            Math.floor(
+                xpNeed * 1.35
+            );
+
+        showUpgrade();
+
+        beep(
+            700,
+            .18,
+            "sine",
+            .05
+        );
+    }
+}
+
+/* =========================
+   გაუმჯობესებები
+========================= */
+
+const upgrades = [
+
+    [
+        "⚡",
+        "სწრაფი სროლა",
+        "სროლის სიჩქარე იზრდება 18%-ით",
+        ()=>{
+            player.fireRate*=.82;
+        }
+    ],
+
+    [
+        "💥",
+        "გადატვირთული იარაღი",
+        "ზიანი იზრდება 30%-ით",
+        ()=>{
+            player.damage*=1.3;
+        }
+    ],
+
+    [
+        "❤️",
+        "გაძლიერებული კორპუსი",
+        "მაქსიმალური სიცოცხლე +30 და სრული აღდგენა",
+        ()=>{
+            player.maxHp+=30;
+            player.hp=
+                player.maxHp;
+        }
+    ],
+
+    [
+        "🏃",
+        "ნანო ძრავა",
+        "მოძრაობის სიჩქარე იზრდება 15%-ით",
+        ()=>{
+            player.speed*=1.15;
+        }
+    ],
+
+    [
+        "🎯",
+        "კრიტიკული დარტყმა",
+        "კრიტიკული დარტყმის შანსი +10%",
+        ()=>{
+            player.crit+=.10;
+        }
+    ],
+
+    [
+        "🔋",
+        "ენერგიის უჯრედები",
+        "ტყვიის სიჩქარე იზრდება 20%-ით",
+        ()=>{
+            player.bulletSpeed*=1.2;
+        }
+    ]
+];
+
+function showUpgrade(){
+
+    paused=true;
+
+    const screen =
+        document.getElementById(
+            "upgradeScreen"
+        );
+
+    const container =
+        document.getElementById(
+            "upgradeContainer"
+        );
+
+    container.innerHTML="";
+
+    [...upgrades]
+        .sort(
+            ()=>Math.random()-.5
+        )
+        .slice(0,3)
+        .forEach(upgrade=>{
+
+            const element =
+                document.createElement(
+                    "div"
+                );
+
+            element.className =
+                "upgrade";
+
+            element.innerHTML=`
+
+                <div class="upgradeIcon">
+                    ${upgrade[0]}
+                </div>
+
+                <h3>
+                    ${upgrade[1]}
+                </h3>
+
+                <p>
+                    ${upgrade[2]}
+                </p>
+            `;
+
+            element.addEventListener(
+                "click",
+                ()=>{
+
+                    upgrade[3]();
+
+                    screen.classList.add(
+                        "hidden"
+                    );
+
+                    paused=false;
+
+                    beep(
+                        700,
+                        .18,
+                        "sine",
+                        .05
+                    );
+                }
+            );
+
+            container.appendChild(
+                element
+            );
+        });
+
+    screen.classList.remove(
+        "hidden"
+    );
+}
+
+/* =========================
+   DAMAGE
+========================= */
+
+function hurt(amount){
+
+    if(player.invuln>0)
+        return;
+
+    player.hp-=amount;
+
+    player.invuln=.45;
+
+    shake=12;
+
+    burst(
+        player.x,
+        player.y,
+        "#ff1744",
+        18,
+        230
+    );
+
+    beep(
+        100,
+        .12,
+        "sawtooth",
+        .06
+    );
+
+    if(player.hp<=0){
+
+        player.hp=0;
+
+        endGame();
+    }
+}
+
+/* =========================
+   მტრის განადგურება
+========================= */
+
+function killEnemy(index){
+
+    const enemy =
+        enemies[index];
+
+    score +=
+        Math.floor(
+            enemy.xp * 5
+        );
+
+    coins +=
+        enemy.coins;
+
+    kills++;
+
+    gainXP(
+        enemy.xp
+    );
+
+    burst(
+        enemy.x,
+        enemy.y,
+        enemy.color,
+        enemy.type==="tank"
+            ? 45
+            : 24,
+        enemy.type==="tank"
+            ? 380
+            : 250
+    );
+
+    floating(
+        enemy.x,
+        enemy.y,
+        "+" +
+        enemy.xp +
+        " გამოცდილება",
+        "#00f6ff"
+    );
+
+    shake +=
+        enemy.type==="tank"
+            ? 9
+            : 3;
+
+    beep(
+        enemy.type==="tank"
+            ? 80
+            : 130,
+        .08,
+        "sawtooth",
+        .035
+    );
+
+    enemies.splice(
+        index,
+        1
+    );
+}
+
+/* =========================
+   UPDATE
+========================= */
+
+function update(dt){
+
+    if(!running || paused)
+        return;
+
+    time+=dt;
+
+    player.fireCD-=dt;
+    player.dashCD-=dt;
+    player.invuln-=dt;
+
+    let dx=0;
+    let dy=0;
+
+    if(keys.KeyW || keys.ArrowUp)
+        dy--;
+
+    if(keys.KeyS || keys.ArrowDown)
+        dy++;
+
+    if(keys.KeyA || keys.ArrowLeft)
+        dx--;
+
+    if(keys.KeyD || keys.ArrowRight)
+        dx++;
+
+    const length =
+        Math.hypot(dx,dy);
+
+    if(length){
+
+        dx/=length;
+        dy/=length;
+
+        player.x +=
+            dx *
+            player.speed *
+            dt;
+
+        player.y +=
+            dy *
+            player.speed *
+            dt;
+    }
+
+    player.x =
+        clamp(
+            player.x,
+            25,
+            W-25
+        );
+
+    player.y =
+        clamp(
+            player.y,
+            25,
+            H-25
+        );
+
+    if(mouse.down)
+        shoot();
+
+    spawnTimer-=dt;
+
+    const spawnRate =
+        Math.max(
+            .16,
+            .8 -
+            time*.007
+        );
+
+    if(spawnTimer<=0){
+
+        spawnEnemy();
+
+        spawnTimer =
+            spawnRate;
+
+        if(
+            time>45 &&
+            Math.random()<.25
+        ){
+            spawnEnemy();
+        }
+    }
+
+    /* ტყვიები */
+
+    for(
+        let i=bullets.length-1;
+        i>=0;
+        i--
+    ){
+
+        const bullet =
+            bullets[i];
+
+        bullet.x +=
+            bullet.vx*dt;
+
+        bullet.y +=
+            bullet.vy*dt;
+
+        bullet.life-=dt;
+
+        let remove =
+            bullet.life<=0;
+
+        for(
+            let j=enemies.length-1;
+            j>=0 && !remove;
+            j--
+        ){
+
+            const enemy =
+                enemies[j];
+
+            if(
+                Math.hypot(
+                    bullet.x-enemy.x,
+                    bullet.y-enemy.y
+                )
+                <
+                bullet.r +
+                enemy.r
+            ){
+
+                enemy.hp -=
+                    bullet.damage;
+
+                burst(
+                    bullet.x,
+                    bullet.y,
+                    bullet.critical
+                        ? "#ffe66d"
+                        : "#00f6ff",
+                    6,
+                    90
+                );
+
+                floating(
+                    enemy.x,
+                    enemy.y-enemy.r,
+                    Math.round(
+                        bullet.damage
+                    ),
+                    bullet.critical
+                        ? "#ffe66d"
+                        : "#fff"
+                );
+
+                if(enemy.hp<=0)
+                    killEnemy(j);
+
+                remove=true;
+            }
+        }
+
+        if(remove)
+            bullets.splice(i,1);
+    }
+
+    /* მტრები */
+
+    for(
+        let i=enemies.length-1;
+        i>=0;
+        i--
+    ){
+
+        const enemy =
+            enemies[i];
+
+        const angle =
+            Math.atan2(
+                player.y-enemy.y,
+                player.x-enemy.x
+            );
+
+        enemy.x +=
+            Math.cos(angle) *
+            enemy.speed *
+            dt;
+
+        enemy.y +=
+            Math.sin(angle) *
+            enemy.speed *
+            dt;
+
+        const distance =
+            Math.hypot(
+                player.x-enemy.x,
+                player.y-enemy.y
+            );
+
+        if(
+            distance <
+            player.r +
+            enemy.r
+        ){
+
+            hurt(
+                enemy.damage*dt
+            );
+
+            const push =
+                Math.max(
+                    0,
+                    player.r+
+                    enemy.r-
+                    distance
+                );
+
+            player.x +=
+                Math.cos(angle) *
+                push;
+
+            player.y +=
+                Math.sin(angle) *
+                push;
+        }
+    }
+
+    /* ნაწილაკები */
+
+    for(
+        let i=particles.length-1;
+        i>=0;
+        i--
+    ){
+
+        const particle =
+            particles[i];
+
+        particle.x +=
+            particle.vx*dt;
+
+        particle.y +=
+            particle.vy*dt;
+
+        particle.vx*=.96;
+        particle.vy*=.96;
+
+        particle.life-=dt;
+
+        if(
+            particle.life<=0
+        ){
+            particles.splice(
+                i,
+                1
+            );
+        }
+    }
+
+    /* ტექსტები */
+
+    for(
+        let i=texts.length-1;
+        i>=0;
+        i--
+    ){
+
+        const text =
+            texts[i];
+
+        text.y +=
+            text.vy*dt;
+
+        text.life-=dt;
+
+        if(text.life<=0)
+            texts.splice(i,1);
+    }
+
+    /* ვარსკვლავები */
+
+    stars.forEach(star=>{
+
+        star.y +=
+            star.speed*dt;
+
+        if(star.y>H){
+
+            star.y=-5;
+
+            star.x=
+                Math.random()*W;
+        }
+    });
+
+    shake*=.88;
+
+    updateHUD();
+}
+
+/* =========================
+   DRAW
+========================= */
+
+function draw(){
+
+    ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    ctx.save();
+
+    if(shake>.2){
+
+        ctx.translate(
+            rand(-shake,shake),
+            rand(-shake,shake)
+        );
+    }
+
+    drawBackground();
+    drawBullets();
+    drawEnemies();
+    drawPlayer();
+    drawParticles();
+    drawTexts();
+
+    ctx.restore();
+}
+
+/* =========================
+   BACKGROUND
+========================= */
+
+function drawBackground(){
+
+    const gradient =
+        ctx.createRadialGradient(
+            W/2,
+            H/2,
+            0,
+            W/2,
+            H/2,
+            Math.max(W,H)
+        );
+
+    gradient.addColorStop(
+        0,
+        "#0b1730"
+    );
+
+    gradient.addColorStop(
+        .45,
+        "#050b1a"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#010208"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+    stars.forEach(star=>{
+
+        ctx.globalAlpha =
+            star.alpha;
+
+        ctx.fillStyle =
+            "#d7f9ff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            star.x,
+            star.y,
+            star.r,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    });
+
+    ctx.globalAlpha=1;
+
+    const grid=70;
+
+    ctx.strokeStyle =
+        "#00f6ff09";
+
+    ctx.lineWidth=1;
+
+    for(
+        let x=0;
+        x<W;
+        x+=grid
+    ){
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            0
+        );
+
+        ctx.lineTo(
+            x,
+            H
+        );
+
+        ctx.stroke();
+    }
+
+    for(
+        let y=0;
+        y<H;
+        y+=grid
+    ){
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            W,
+            y
+        );
+
+        ctx.stroke();
+    }
+}
+
+/* =========================
+   მოთამაშე
+========================= */
+
+function drawPlayer(){
+
+    const angle =
+        Math.atan2(
+            mouse.y-player.y,
+            mouse.x-player.x
+        );
+
+    ctx.save();
+
+    ctx.translate(
+        player.x,
+        player.y
+    );
+
+    ctx.rotate(angle);
+
+    ctx.shadowBlur=30;
+    ctx.shadowColor="#00f6ff";
+
+    ctx.fillStyle="#061b2a";
+    ctx.strokeStyle="#00f6ff";
+    ctx.lineWidth=2;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        25,
+        0
+    );
+
+    ctx.lineTo(
+        -12,
+        -14
+    );
+
+    ctx.lineTo(
+        -7,
+        0
+    );
+
+    ctx.lineTo(
+        -12,
+        14
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle="#00f6ff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        5,
+        0,
+        7,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        7,
+        0,
+        3,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+
+    if(player.invuln>0){
+
+        ctx.strokeStyle="#fff";
+        ctx.globalAlpha=.6;
+        ctx.lineWidth=3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            player.x,
+            player.y,
+            25,
+            0,
+            Math.PI*2
+        );
+
+        ctx.stroke();
+
+        ctx.globalAlpha=1;
+    }
+}
+
+/* =========================
+   ტყვიები
+========================= */
+
+function drawBullets(){
+
+    bullets.forEach(
+        bullet=>{
+
+            ctx.save();
+
+            ctx.shadowBlur=18;
+
+            ctx.shadowColor =
+                bullet.critical
+                    ? "#ffe66d"
+                    : "#00f6ff";
+
+            ctx.fillStyle =
+                bullet.critical
+                    ? "#ffe66d"
+                    : "#00f6ff";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                bullet.x,
+                bullet.y,
+                bullet.r,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.restore();
+        }
+    );
+}
+
+/* =========================
+   მტრები
+========================= */
+
+function drawEnemies(){
+
+    enemies.forEach(enemy=>{
+
+        ctx.save();
+
+        ctx.translate(
+            enemy.x,
+            enemy.y
+        );
+
+        ctx.shadowBlur=25;
+        ctx.shadowColor =
+            enemy.color;
+
+        ctx.strokeStyle =
+            enemy.color;
+
+        ctx.fillStyle =
+            enemy.color+"22";
+
+        ctx.lineWidth=2;
+
+        if(enemy.type==="tank"){
+
+            ctx.rotate(
+                time*.5
+            );
+
+            ctx.beginPath();
+
+            for(
+                let i=0;
+                i<8;
+                i++
+            ){
+
+                const angle =
+                    i*Math.PI/4;
+
+                const radius =
+                    i%2
+                        ? enemy.r*.72
+                        : enemy.r;
+
+                const x =
+                    Math.cos(angle)*
+                    radius;
+
+                const y =
+                    Math.sin(angle)*
+                    radius;
+
+                if(i===0)
+                    ctx.moveTo(x,y);
+                else
+                    ctx.lineTo(x,y);
+            }
+
+            ctx.closePath();
+
+            ctx.fill();
+            ctx.stroke();
+
+        }else if(
+            enemy.type==="fast"
+        ){
+
+            ctx.rotate(
+                Math.PI/4
+            );
+
+            ctx.beginPath();
+
+            ctx.rect(
+                -enemy.r,
+                -enemy.r,
+                enemy.r*2,
+                enemy.r*2
+            );
+
+            ctx.fill();
+            ctx.stroke();
+
+        }else{
+
+            ctx.beginPath();
+
+            ctx.arc(
+                0,
+                0,
+                enemy.r,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle =
+                enemy.color;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                0,
+                0,
+                5,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.restore();
+
+        const width =
+            enemy.r*2;
+
+        const hp =
+            Math.max(
+                0,
+                enemy.hp/
+                enemy.maxHp
+            );
+
+        ctx.fillStyle="#000a";
+
+        ctx.fillRect(
+            enemy.x-width/2,
+            enemy.y-enemy.r-9,
+            width,
+            4
+        );
+
+        ctx.fillStyle =
+            enemy.color;
+
+        ctx.fillRect(
+            enemy.x-width/2,
+            enemy.y-enemy.r-9,
+            width*hp,
+            4
+        );
+    });
+}
+
+/* =========================
+   ნაწილაკები
+========================= */
+
+function drawParticles(){
+
+    particles.forEach(
+        particle=>{
+
+            ctx.globalAlpha =
+                Math.max(
+                    0,
+                    particle.life/
+                    particle.max
+                );
+
+            ctx.fillStyle =
+                particle.color;
+
+            ctx.shadowBlur=12;
+
+            ctx.shadowColor =
+                particle.color;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                particle.x,
+                particle.y,
+                particle.size,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+    );
+
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=0;
+}
+
+/* =========================
+   ტექსტები
+========================= */
+
+function drawTexts(){
+
+    texts.forEach(text=>{
+
+        ctx.globalAlpha =
+            Math.max(
+                0,
+                text.life
+            );
+
+        ctx.fillStyle =
+            text.color;
+
+        ctx.font =
+            "bold 13px Arial";
+
+        ctx.textAlign =
+            "center";
+
+        ctx.fillText(
+            text.text,
+            text.x,
+            text.y
+        );
+    });
+
+    ctx.globalAlpha=1;
+}
+
+/* =========================
+   HUD
+========================= */
+
+function updateHUD(){
+
+    document.getElementById(
+        "hpBar"
+    ).style.width =
+        (
+            player.hp/
+            player.maxHp*
+            100
+        )+"%";
+
+    document.getElementById(
+        "xpBar"
+    ).style.width =
+        (
+            xp/
+            xpNeed*
+            100
+        )+"%";
+
+    document.getElementById(
+        "levelText"
+    ).textContent =
+        level;
+
+    document.getElementById(
+        "scoreText"
+    ).textContent =
+        Math.floor(score);
+
+    document.getElementById(
+        "coinsText"
+    ).textContent =
+        coins;
+
+    document.getElementById(
+        "killsText"
+    ).textContent =
+        kills;
+
+    document.getElementById(
+        "timeText"
+    ).textContent =
+        formatTime(time);
+}
+
+/* =========================
+   თამაშის დაწყება
+========================= */
+
+function resetGame(){
+
+    running=true;
+    paused=false;
+
+    time=0;
+    score=0;
+    coins=0;
+    kills=0;
+
+    level=1;
+
+    xp=0;
+    xpNeed=100;
+
+    spawnTimer=.2;
+
+    shake=0;
+
+    bullets.length=0;
+    enemies.length=0;
+    particles.length=0;
+    texts.length=0;
+
+    player.x=W/2;
+    player.y=H/2;
+
+    player.hp=100;
+    player.maxHp=100;
+
+    player.damage=25;
+    player.speed=300;
+
+    player.fireRate=.13;
+    player.fireCD=0;
+
+    player.bulletSpeed=850;
+
+    player.crit=.1;
+
+    player.dashCD=0;
+    player.invuln=0;
+
+    document.getElementById(
+        "menu"
+    ).classList.add("hidden");
+
+    document.getElementById(
+        "gameOver"
+    ).classList.add("hidden");
+
+    document.getElementById(
+        "pauseScreen"
+    ).classList.add("hidden");
+
+    document.getElementById(
+        "upgradeScreen"
+    ).classList.add("hidden");
+
+    updateHUD();
+
+    last=
+        performance.now();
+
+    requestAnimationFrame(loop);
+}
+
+/* =========================
+   Game Over
+========================= */
+
+function endGame(){
+
+    if(!running)
+        return;
+
+    running=false;
+    paused=false;
+
+    document.getElementById(
+        "finalScore"
+    ).textContent =
+        Math.floor(score);
+
+    document.getElementById(
+        "finalKills"
+    ).textContent =
+        kills;
+
+    document.getElementById(
+        "finalTime"
+    ).textContent =
+        formatTime(time);
+
+    document.getElementById(
+        "gameOver"
+    ).classList.remove(
+        "hidden"
+    );
+
+    beep(
+        70,
+        .5,
+        "sawtooth",
+        .08
+    );
+}
+
+/* =========================
+   პაუზა
+========================= */
+
+function togglePause(){
+
+    if(!running)
+        return;
+
+    if(
+        !document
+        .getElementById(
+            "upgradeScreen"
+        )
+        .classList
+        .contains("hidden")
+    ){
+        return;
+    }
+
+    paused=!paused;
+
+    document
+        .getElementById(
+            "pauseScreen"
+        )
+        .classList
+        .toggle(
+            "hidden",
+            !paused
+        );
+
+    if(!paused){
+
+        last=
+            performance.now();
+    }
+}
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function loop(now){
+
+    if(!running)
+        return;
+
+    const dt =
+        Math.min(
+            (now-last)/1000,
+            .033
+        );
+
+    last=now;
+
+    update(dt);
+
+    draw();
+
+    requestAnimationFrame(
+        loop
+    );
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+document
+    .getElementById(
+        "startBtn"
+    )
+    .addEventListener(
+        "click",
+        ()=>{
+            initAudio();
+            resetGame();
+        }
+    );
+
+document
+    .getElementById(
+        "restartBtn"
+    )
+    .addEventListener(
+        "click",
+        ()=>{
+            initAudio();
+            resetGame();
+        }
+    );
+
+document
+    .getElementById(
+        "resumeBtn"
+    )
+    .addEventListener(
+        "click",
+        ()=>{
+
+            paused=false;
+
+            document
+                .getElementById(
+                    "pauseScreen"
+                )
+                .classList
+                .add("hidden");
+
+            last=
+                performance.now();
+        }
+    );
+
+updateHUD();
+draw();
+
+</script>
+
+</body>
+</html>
